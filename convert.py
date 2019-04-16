@@ -1,8 +1,8 @@
 def get_state():
     dict = {}
-    file = open("stateabbr.txt",'r')
+    file = open("stateabbr_process.txt",'r')
     for line in file:
-        state = line.split(' ',maxsplit = 1)
+        state = line.strip().split(' ',maxsplit = 1)
         state = state[0]
         dict[state] = "n"
     file.close()
@@ -20,7 +20,7 @@ def convert():
     file_out.write(head)
     for line in file_in:
         list = line.strip().split(',')
-        temp_state = state
+        temp_state = state.copy()
         for i in range(1,len(list)):
             if list[i] in temp_state:
                 temp_state[list[i]] = 'y'

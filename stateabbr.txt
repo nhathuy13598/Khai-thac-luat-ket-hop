@@ -1,3 +1,6 @@
+State Abbreviations
+
+U.S. States:
 ab Alabama
 ak Alaska
 ar Arkansas
@@ -51,6 +54,9 @@ wa Washington
 wv West Virginia
 wi Wisconsin
 wy Wyoming
+
+
+Canada:
 al Alberta
 bc British Columbia
 mb Manitoba
@@ -61,9 +67,10 @@ nt Northwest Territories
 ns Nova Scotia
 nu Nunavut
 on Ontario
-pe Prince Edward Island
+Prince Edward Island
 qc Qu�bec
 sk Saskatchewan
 yt Yukon
+
 dengl Greenland (Denmark)
 fraspm St. Pierre and Miquelon (France)
