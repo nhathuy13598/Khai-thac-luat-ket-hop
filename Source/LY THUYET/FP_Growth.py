@@ -1,22 +1,23 @@
-# T = {
-#     "100": ['I', 'B', 'F', 'D', 'E', 'C', 'H', 'J'],
-#     "200": ['F', 'G', 'A', 'D', 'C'],
-#     "300": ['B', 'J', 'D', 'A', 'H'],
-#     "400": ['A', 'B', 'E', 'G']
-# }
-# item = ('A','B','C','D','E','F','G','H','I','J')
-T ={
-    't100': ['i1','i2','i5'],
-    't200': ['i2','i4'],
-    't300': ['i2', 'i3'],
-    't400': ['i1', 'i2', 'i4'],
-    't500': ['i1', 'i3'],
-    't600': ['i2', 'i3'],
-    't700': ['i1', 'i3'],
-    't800': ['i1', 'i2','i3','i5'],
-    't900': ['i1','i2','i3']
+import copy
+T = {
+    "100": ['I', 'B', 'F', 'D', 'E', 'C', 'H', 'J'],
+    "200": ['F', 'G', 'A', 'D', 'C'],
+    "300": ['B', 'J', 'D', 'A', 'H'],
+    "400": ['A', 'B', 'E', 'G']
 }
-item = ('i1','i2','i3','i4','i5')
+item = ('A','B','C','D','E','F','G','H','I','J')
+# T ={
+#     't100': ['i1','i2','i5'],
+#     't200': ['i2','i4'],
+#     't300': ['i2', 'i3'],
+#     't400': ['i1', 'i2', 'i4'],
+#     't500': ['i1', 'i3'],
+#     't600': ['i2', 'i3'],
+#     't700': ['i1', 'i3'],
+#     't800': ['i1', 'i2','i3','i5'],
+#     't900': ['i1','i2','i3']
+# }
+# item = ('i1','i2','i3','i4','i5')
 L = {} # Tap pho bien, dictionary trong dictionary co dang {'k': dictionary}
 minsup = 2
 
@@ -99,11 +100,11 @@ class Node:
             if item == i.key:
                 return i
         return None
-    def increase(self,item):
+    def increase(self,item,increment):
         '''Tang value len 1 don vi'''
         for i in self.Node_list:
             if item == i.key:
-                i.value += 1
+                i.value += increment
 
 # Tao bang head
 def create_HeaderTable(L1):
@@ -142,15 +143,15 @@ def insert_Tree(root:Node,header_table:list,frequent_trans:list):
     Chen vao cay tai nut goc
     :param root: Nut goc
     :param header_table: Bang head table
-    :param frequent_trans: Chuoi pho bien cua transaction
+    :param frequent_trans: Chuoi pho bien cua transaction, co dang list cua tuple ('id',count)
     :return:
     '''
     if len(frequent_trans) == 0: # Neu chuoi frequent_trans khong con phan tu nao thi dung
         return
-    first_item = frequent_trans[0]
+    first_item = frequent_trans[0][0]
     remaining_item = frequent_trans[1:]
     if root.isChild(first_item) == False: # Neu first_item khong la con cua root
-        newNode = Node(first_item,1,root,None) # Tao node moi
+        newNode = Node(first_item,frequent_trans[0][1],root,None) # Tao node moi
         for i in header_table: # Them vao bang head tai phan tu i
             if newNode == i:
                 insert_HeadTable(i,newNode)
@@ -159,7 +160,7 @@ def insert_Tree(root:Node,header_table:list,frequent_trans:list):
         temp = newNode
         insert_Tree(temp,header_table,remaining_item)
     else: # Neu first_item la con cua root
-        root.increase(first_item)
+        root.increase(first_item,frequent_trans[0][1])
         temp = root.getNode(first_item)
         insert_Tree(temp,header_table,remaining_item)
 def create_FPTree(T, frequent_list, header_table, root):
@@ -168,7 +169,8 @@ def create_FPTree(T, frequent_list, header_table, root):
         frequent_trans = []
         for i in frequent_list:
             if i in value:
-                frequent_trans.append(i)
+                frequent_trans.append((i,1))
+        print("Frequent trans la: ",frequent_trans)
         insert_Tree(root,header_table,frequent_trans)
     return root
 
@@ -209,40 +211,78 @@ def discover_path(temp:list, root:Node,value:int):
     temp.append((root.key,value))
     parent = root.parent
     discover_path(temp,parent,value)
-def FP_Growth(FP_Tree:Node,header_table:list, beta:str, minsup):
+def Conditional_pattern(header_table:list, beta:str):
+    # Tao Conditional Pattern Base
     conditional_PB = []
+    MyNode = None
     for i in header_table:
         if i.key == beta:
             alpha = i.headNode
+            MyNode = (i.key, i.value)
             while alpha is not None:
                 temp = []
-                discover_path(temp,alpha.parent,alpha.value)
+                discover_path(temp, alpha.parent, alpha.value)
                 temp.reverse()
                 if len(temp) != 0:
                     conditional_PB.append(temp)
                 alpha = alpha.headNode
             break
-    print(conditional_PB)
+    return conditional_PB
+def FP_Growth(FP_Tree:Node,header_table:list,final_result,item_list, beta:str, minsup):
+
+    item_templist = item_list.copy() # Danh sach chua cac item pho bien
+    item_templist.append(beta)
+    conditional_PB = Conditional_pattern(header_table,beta)
+    print(conditional_PB,'for',beta)
+    print("Day la ket qua ==> ",end='')
+    print(item_templist)
+    final_result.append(tuple(item_templist))
+
+    # Tao frequent item cho Conditional_PB
+    frequent_item_in_CPB = {}
+    for i in conditional_PB: # i la list cua cac node, moi node la tuple
+        for j in i: # Duyet tung node, moi node la tuple
+            if j[0] not in frequent_item_in_CPB:
+                frequent_item_in_CPB[j[0]] = j[1]
+            else:
+                frequent_item_in_CPB[j[0]] += j[1]
+    for key in list(frequent_item_in_CPB.keys()):
+        if frequent_item_in_CPB[key] < minsup:
+            del frequent_item_in_CPB[key]
+    sorted_frequent_item = [(k, frequent_item_in_CPB[k]) for k in sorted(frequent_item_in_CPB, key=frequent_item_in_CPB.get, reverse=True)]
+
+    # Tao FP Tree
     size_CPB = len(conditional_PB)
-    for i in range(0,size_CPB - 1):
-        for j in range(i + 1, size_CPB):
-            p1 = conditional_PB[i] # List 1
-            p2 = conditional_PB[j] # List 2
-            size = min(len(p1),len(p2))
-            for k in range(0,size):
-                if p1[k][0] == p2[0][0]: # Kiem tra id co bang nhau hay khong
-                    p1[k] = (p1[k][0],p1[k][1] + p2[k][1])
-                    p2.__delitem__(0)
-                    size = min(len(p1), len(p2))
-                    k -= 1
+    head_SubTable = []
+    root = Node('root', 1, None, None)  # Tao nut goc
+    for i in sorted_frequent_item:
+        head_SubTable.append(Node(i[0],i[1]))
 
-    # Xoa cac phan tu be hon minsup
-    for i in range(0,size_CPB):
-        for item in conditional_PB[i]:
-            if item[1] < minsup:
-                conditional_PB[i].remove(item)
-        if len(conditional_PB[i]) == 0:
-            conditional_PB.remove(conditional_PB[i])
-    print(conditional_PB)
-FP_Growth(root,header_table,'i5',2)
+    # Tao frequent trans trong tung Conditional_FB
+    for i in conditional_PB: # Duyet tung path
+        frequent_trans = []
+        for j in i: # Duyet tung node cua path
+            for k in sorted_frequent_item:
+                if j[0] == k[0]:
+                    frequent_trans.append(j)
+                    break
+        insert_Tree(root,head_SubTable,frequent_trans)
+    FPTree_print(root)
+    for i in head_SubTable:
+        FP_Growth(root,head_SubTable,final_result,item_templist,i.key,minsup)
 
+
+# itemlist = []
+# final_result = []
+#a = FP_Growth(root,header_table,final_result,itemlist,'i3',2)
+def Run_FPGrowth(root,header_table,minsup):
+    size = len(header_table) - 1
+    final = []
+    itemlist = []
+    while size >= 0:
+        FP_Growth(root,header_table,final,itemlist,header_table[size].key,minsup)
+        size -= 1
+    return final
+
+final = Run_FPGrowth(root,header_table,minsup)
+print(final)

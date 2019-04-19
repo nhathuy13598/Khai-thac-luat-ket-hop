@@ -1,12 +1,14 @@
+import time
 T = {
     "100": ['I', 'B', 'F', 'D', 'E', 'C', 'H', 'J'],
-    "200": ['F', 'G', 'A', 'D', 'C'],
+    "200": ['F', 'C', 'F' 'G', 'A', 'D', 'C'],
     "300": ['B', 'J', 'D', 'A', 'H'],
-    "400": ['A', 'B', 'E', 'G']
+    "400": ['E', 'A', 'B', 'E', 'G']
 }
 item = ('A','B','C','D','E','F','G','H','I','J')
 L = {} # Tap pho bien, dictionary trong dictionary co dang {'k': dictionary}
 minsup = 2
+minconf = 1
 def find_frequent_1itemset(item, minsup, T):
     '''
     Tim tap pho bien 1-itemset
@@ -110,4 +112,84 @@ def Apriori_Run(T,L,minsup):
     return L
 
 L = Apriori_Run(T,L,minsup)
-print(L)
+#print(L)
+
+def association_rule(frequent_set:dict,L:dict, minconf:int):
+    '''
+    Liet ke cac luat ket hop thoa minconf
+    :param L: Tap pho bien
+    :return:
+    '''
+    for k in range(2,len(L)):
+        '''Tim luat ket hop tu 2 tap 2 item tro len'''
+        k_itemset = frequent_set[str(k)] # Tap cac k-item pho bien, dictionary co dang {'item_id': count}
+        for items,value in k_itemset.items(): # Lay item_id va count
+            for size in range(1,len(items)): # Lap theo kich thuoc cua item_id
+                subset = [] # Mang luu cac tap con
+                generate_subset(subset,items,'',0,size) # Tao subset
+                for i in subset: # Lap voi moi tap trong subset, i ung voi ve sau cua menh de Neu ... thi ...
+                    newStr = items
+                    for charac in i: # Tao phan Neu ...
+                        newStr = newStr.replace(charac,'')
+                    newsize = len(newStr) # Lay kich thuoc cua phan neu
+                    if value / L[str(newsize)][newStr] >= minconf: # Tinh conf
+                        print(newStr,'=>',i,'with conf',value / L[str(newsize)][newStr]*100,"%")
+# start = time.time()
+# association_rule(L,L,1)
+# end = time.time()
+# print("Time for frequent items: ",end - start)
+
+def Close_Frequent_item(L:dict):
+    Closed_L = {}
+    Closed_L['1'] = L['1']
+    for k in range(2,len(L) + 1): # Lap tu tap 2-itemset
+        Closed_L[str(k)] = {}
+        for kitem in  L[str(k)].items(): # Voi moi item trong k-itemset
+            isClosed = True
+            for j in range(k + 1,len(L) + 1): # Lap tu tap 3-itemset tro len
+                for jitem in L[str(j)].items(): # Voi moi item trong (k+1)-itemset
+                    if kitem[1] == jitem[1]:
+                        size = len(kitem[0])
+                        count = 0
+                        for character in kitem[0]:
+                            if character in jitem[0]:
+                                count += 1
+                        if count == size:
+                            isClosed = False
+                            break
+            if isClosed == True:
+                Closed_L[str(k)][kitem[0]] = kitem[1]
+    return Closed_L
+Closed_L = Close_Frequent_item(L)
+start = time.time()
+association_rule(Closed_L,L,1)
+end = time.time()
+print("Time for closed frequent items: ",end - start)
+
+def Maximax_Frequent_item(Closed_L):
+    Maximax_L = {}
+    Maximax_L['1'] = Closed_L['1']
+    for k in range(2,len(Closed_L) + 1): # Lap tu tap 2-itemset
+        Maximax_L[str(k)] = {}
+        for kitem in  Closed_L[str(k)].items(): # Voi moi item trong k-itemset
+            isMaximax = True
+            print(kitem)
+            for j in range(k + 1,len(Closed_L) + 1): # Lap tu tap 3-itemset tro len
+                for jitem in Closed_L[str(j)].items(): # Voi moi item trong (k+1)-itemset
+                    if kitem[1] <= jitem[1]:
+                        size = len(kitem[0])
+                        count = 0
+                        for character in kitem[0]:
+                            if character in jitem[0]:
+                                count += 1
+                        if count == size:
+                            isMaximax = False
+                            break
+            if isMaximax == True:
+                Maximax_L[str(k)][kitem[0]] = kitem[1]
+    return Maximax_L
+# Maxima_L = Maximax_Frequent_item(L)
+# start = time.time()
+# association_rule(Maxima_L,L,1)
+# end = time.time()
+# print("Time for maxima frequent items: ",end - start)
