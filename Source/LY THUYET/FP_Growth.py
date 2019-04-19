@@ -228,15 +228,21 @@ def Conditional_pattern(header_table:list, beta:str):
                 alpha = alpha.headNode
             break
     return conditional_PB
-def FP_Growth(FP_Tree:Node,header_table:list,final_result,item_list, beta:str, minsup):
+def FP_Growth(FP_Tree:Node,header_table:list,final_result,item_list,value_list, beta:str,value, minsup):
 
+    print("Beta la: ",beta)
     item_templist = item_list.copy() # Danh sach chua cac item pho bien
+    value_templist = value_list.copy() # Danh sach chua cac value
     item_templist.append(beta)
-    conditional_PB = Conditional_pattern(header_table,beta)
-    print(conditional_PB,'for',beta)
-    print("Day la ket qua ==> ",end='')
+    value_templist.append(value)
+    print("Day la ket qua ==> ", end='')
     print(item_templist)
-    final_result.append(tuple(item_templist))
+    final_result.append((item_templist,min(value_templist)))
+    conditional_PB = Conditional_pattern(header_table,beta)
+    print("Condition FP :" ,conditional_PB,'for',beta)
+    if len(conditional_PB) == 0:
+        return
+
 
     # Tao frequent item cho Conditional_PB
     frequent_item_in_CPB = {}
@@ -269,7 +275,7 @@ def FP_Growth(FP_Tree:Node,header_table:list,final_result,item_list, beta:str, m
         insert_Tree(root,head_SubTable,frequent_trans)
     FPTree_print(root)
     for i in head_SubTable:
-        FP_Growth(root,head_SubTable,final_result,item_templist,i.key,minsup)
+        FP_Growth(root,head_SubTable,final_result,item_templist,value_templist,i.key,i.value,minsup)
 
 
 # itemlist = []
@@ -279,8 +285,9 @@ def Run_FPGrowth(root,header_table,minsup):
     size = len(header_table) - 1
     final = []
     itemlist = []
+    valuelist = []
     while size >= 0:
-        FP_Growth(root,header_table,final,itemlist,header_table[size].key,minsup)
+        FP_Growth(root,header_table,final,itemlist,valuelist,header_table[size].key,header_table[size].value,minsup)
         size -= 1
     return final
 
