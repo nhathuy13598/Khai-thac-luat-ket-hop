@@ -1,25 +1,23 @@
 import copy
-T = {
-    "100": ['I', 'B', 'F', 'D', 'E', 'C', 'H', 'J'],
-    "200": ['F', 'G', 'A', 'D', 'C'],
-    "300": ['B', 'J', 'D', 'A', 'H'],
-    "400": ['A', 'B', 'E', 'G']
-}
-item = ('A','B','C','D','E','F','G','H','I','J')
-# T ={
-#     't100': ['i1','i2','i5'],
-#     't200': ['i2','i4'],
-#     't300': ['i2', 'i3'],
-#     't400': ['i1', 'i2', 'i4'],
-#     't500': ['i1', 'i3'],
-#     't600': ['i2', 'i3'],
-#     't700': ['i1', 'i3'],
-#     't800': ['i1', 'i2','i3','i5'],
-#     't900': ['i1','i2','i3']
-# }
-# item = ('i1','i2','i3','i4','i5')
+def read_data(filename):
+    data = open(filename, "r")
+    item = data.readline()
+    itemset = tuple(item.strip().split(','))
+    transaction = {}
+    id = 1
+    for line in data:
+        fLine = line.strip().split(',')
+        transaction[id] = fLine
+        id += 1
+    data.close()
+    return itemset,transaction
+
+item,T = read_data('data.txt')
+
+minsup = int(input("Nhap minsup: "))
+minconf = int(input("Nhap minconf (0<= minconf <=1): "))
+
 L = {} # Tap pho bien, dictionary trong dictionary co dang {'k': dictionary}
-minsup = 2
 
 # Tim L1
 def find_frequent_1itemset(item, minsup, T):
@@ -53,7 +51,6 @@ def sort(L1):
                 L1[j] = temp
     return L1
 L1 = sort(L1)
-print(L1)
 
 
 # Lop Node
@@ -114,13 +111,10 @@ def create_HeaderTable(L1):
         header_table.append(temp)
     return header_table
 header_table = create_HeaderTable(L1)
-# print("Header Table:")
-# for i in header_table:
-#     print(i)
 
 # Tao nut goc
 root = Node('root',1,None,None)
-#print(root)
+
 
 
 # Tao cay FP
@@ -170,7 +164,6 @@ def create_FPTree(T, frequent_list, header_table, root):
         for i in frequent_list:
             if i in value:
                 frequent_trans.append((i,1))
-        print("Frequent trans la: ",frequent_trans)
         insert_Tree(root,header_table,frequent_trans)
     return root
 
@@ -230,16 +223,12 @@ def Conditional_pattern(header_table:list, beta:str):
     return conditional_PB
 def FP_Growth(FP_Tree:Node,header_table:list,final_result,item_list,value_list, beta:str,value, minsup):
 
-    print("Beta la: ",beta)
     item_templist = item_list.copy() # Danh sach chua cac item pho bien
     value_templist = value_list.copy() # Danh sach chua cac value
     item_templist.append(beta)
     value_templist.append(value)
-    print("Day la ket qua ==> ", end='')
-    print(item_templist)
     final_result.append((item_templist,min(value_templist)))
     conditional_PB = Conditional_pattern(header_table,beta)
-    print("Condition FP :" ,conditional_PB,'for',beta)
     if len(conditional_PB) == 0:
         return
 
@@ -273,14 +262,11 @@ def FP_Growth(FP_Tree:Node,header_table:list,final_result,item_list,value_list, 
                     frequent_trans.append(j)
                     break
         insert_Tree(root,head_SubTable,frequent_trans)
-    FPTree_print(root)
     for i in head_SubTable:
         FP_Growth(root,head_SubTable,final_result,item_templist,value_templist,i.key,i.value,minsup)
 
 
-# itemlist = []
-# final_result = []
-#a = FP_Growth(root,header_table,final_result,itemlist,'i3',2)
+
 def Run_FPGrowth(root,header_table,minsup):
     size = len(header_table) - 1
     final = []
@@ -292,4 +278,6 @@ def Run_FPGrowth(root,header_table,minsup):
     return final
 
 final = Run_FPGrowth(root,header_table,minsup)
-print(final)
+print("Tap pho bien la: ",end='')
+for item in final:
+    print(item)
